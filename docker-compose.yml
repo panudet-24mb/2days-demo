@@ -1,0 +1,40 @@
+version: "2"
+services:
+  2day:
+    container_name: 2day
+    build: ./2day
+    volumes:
+      - './2day/python/app:/app'
+    restart: always
+    ports:
+      - "7001:80"  
+  mongo:
+      image: mongo:latest
+      container_name: mongo
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: admin
+        MONGO_INITDB_ROOT_PASSWORD: admin_password
+        MONGO_INITDB_DATABASE: 2day
+      ports:
+        - "0.0.0.0:27017:27017"
+      volumes:
+        - type: volume
+          source: MONGO_DATA
+          target: /data/db
+        - type: volume
+          source: MONGO_CONFIG
+          target: /data/configdb
+  mongo-express:
+      image: mongo-express:latest
+      container_name: mongo-express
+      environment:
+        ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+        ME_CONFIG_MONGODB_ADMINPASSWORD: admin_password
+        MONGO_INITDB_DATABASE: 2day
+        ME_CONFIG_MONGODB_SERVER: mongo
+        ME_CONFIG_MONGODB_PORT: "27017"
+      ports:
+        - "0.0.0.0:8081:8081"
+volumes:
+    MONGO_DATA:
+    MONGO_CONFIG:

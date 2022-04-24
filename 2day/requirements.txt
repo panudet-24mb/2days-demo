@@ -1,0 +1,11 @@
+uvicorn
+pydantic
+nameko
+loguru
+numpy
+python-multipart
+aiofiles
+pymongo
+bson
+fastapi
+pyjwt
