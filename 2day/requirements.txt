@@ -5,7 +5,7 @@ loguru
 numpy
 python-multipart
 aiofiles
-pymongo
 bson
 fastapi
 pyjwt
+pymongo
