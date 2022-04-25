@@ -7,7 +7,7 @@ from bson import json_util, ObjectId
 import json
 from typing import Optional
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-client = pymongo.MongoClient("mongodb://admin:admin_password@mongo:27017/")
+client = pymongo.MongoClient("mongodb://admin:admin_password@mongo:27019/")
 
 def get_db_connection() -> pymongo.database.Database:
     db = client["2day"]
