@@ -7,7 +7,7 @@ services:
       - './2day/python/app:/app'
     restart: always
     ports:
-      - "7001:80"  
+      - "7881:80"  
   mongo:
       image: mongo:latest
       container_name: mongo
@@ -16,7 +16,7 @@ services:
         MONGO_INITDB_ROOT_PASSWORD: admin_password
         MONGO_INITDB_DATABASE: 2day
       ports:
-        - "0.0.0.0:27017:27017"
+        - "0.0.0.0:27019:27019"
       volumes:
         - type: volume
           source: MONGO_DATA
@@ -34,7 +34,7 @@ services:
         ME_CONFIG_MONGODB_SERVER: mongo
         ME_CONFIG_MONGODB_PORT: "27017"
       ports:
-        - "0.0.0.0:8081:8081"
+        - "0.0.0.0:8281:8281"
 volumes:
     MONGO_DATA:
     MONGO_CONFIG:
