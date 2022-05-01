@@ -1,3 +1,4 @@
+from sqlite3 import connect
 from fastapi import FastAPI, Body, Depends ,HTTPException, Security
 import pymongo 
 import pydantic 
@@ -7,7 +8,7 @@ from bson import json_util, ObjectId
 import json
 from typing import Optional
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-client = pymongo.MongoClient("mongodb://admin:admin_password@mongo:27019/")
+client = pymongo.MongoClient("mongodb://admin:admin_password@mongo:27017/")
 
 def get_db_connection() -> pymongo.database.Database:
     db = client["2day"]
@@ -69,11 +70,14 @@ async def get_user(username: str):
     #########################################################################
     connection = get_db_connection()
     user = connection.user.find_one({"username": username})
-    user =  json_util.dumps(user , indent = 4)
-    user = json.loads(
-        user
-    )
-    return user
+    if user:
+        user =  json_util.dumps(user , indent = 4)
+        user = json.loads(
+            user
+        )
+        return { "code": 200 , "data" : user }
+    else:
+        return { "code": 1000 , "message" : "No username found","data" : {}}
 
 
 @app.post(
@@ -86,13 +90,13 @@ async def login(
     connection = get_db_connection()
     user = connection.user.find_one({"username": username})
     if user is None:
-        return {"message": "User not found"}
+        return {"code": 100 , "message": "User not found"}
     if user["password"] != password:
-        return {"message": "Password is incorrect"}
+        return {"code": 101 ,"message": "Password is incorrect"}
     user = json.loads(json_util.dumps(user))
     user_id = user["_id"]
     encoded_jwt = jwt.encode({"user_id": user_id["$oid"]}, "secret", algorithm="HS256")
-    return {"message": "Login success" , "token" : encoded_jwt}
+    return {"code": 200 ,"message": "Login success" , "token" : encoded_jwt}
 
 def decodeJWT(token: str) -> dict:
     try:
@@ -143,7 +147,42 @@ async def create_time_log(
 #เขียนเพื่อให้พี่เบล์ดูว่า ตอนนี้ user checkin , checkout ข้อมูลการเข้างาน ของวันนี้
 @app.get(
     "/api/demo/check/time_log")
-async def check_user_time_log():
-    if True : 
-        return {"message": "Time log able to created"}
-    return ({ "message" : "this user cannot create time log today "})
+async def check_user_time_log(
+      credentials: HTTPAuthorizationCredentials = Security(security), 
+    ):
+    user_token =credentials.credentials
+    user_info = decodeJWT(user_token)
+    user_id = (user_info["user_id"])
+    connection = get_db_connection()
+    dateNow = datetime.datetime.now()
+    #find today time log 
+    data = connection.time_log.find(
+        {"user_id": ObjectId(user_id)
+         ,
+         "time_log": {"$gte": dateNow.replace(hour=0, minute=0, second=0, microsecond=0),
+         }
+        }
+    )
+    
+    if data is None:
+        return {"message": "user are not checkin , checkout"  , "data" : [] , "code" : 201}
+    
+
+    data = json_util.dumps(data , indent = 4)
+    data = json.loads(data)
+    
+    user_state = None
+    for index in range(len(data)):     
+        if data[index]["log_type"] == "check-in":
+            user_state = "check-in" 
+        if data[index]["log_type"] == "check-out":
+            user_state = "check-out" 
+            
+    if user_state == "check-in":
+        return {"message": "user are checkin" , "data" : data , "code" : 202}
+    if user_state == "check-out":
+        return {"message": "user are checkout" , "data" : data , "code" : 203}
+    
+        
+   
+
